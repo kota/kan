@@ -28,6 +28,7 @@ class Kan
   def initialize
     @api_client = KanAPIClient.new
     @api_client.login
+    @api_client.deck_port
     update_decks
   end
 

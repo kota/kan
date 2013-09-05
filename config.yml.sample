@@ -1,2 +1,4 @@
 email: your-email
 password: your-password
+api_host: 'http://125.6.189.7'
+swf_version: 1.3.8

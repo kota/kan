@@ -7,16 +7,16 @@ require 'logger'
 
 class KanAPIClient
 
-  SWF_VERSION = "1.3.8"
-  API_HOST = "http://125.6.189.7"
-  API_BASE_URL = API_HOST + "/kcsapi"
-
   def initialize
     @agent = Mechanize.new
     config = YAML.load_file(File.expand_path('../../config.yml', __FILE__))
     @email = config["email"]
     @password = config["password"]
     @logger = Logger.new(File.expand_path('../../api.log', __FILE__))
+
+    @api_host = config["api_host"]
+    @api_base_url =  @api_host + "/kcsapi"; 
+    @swf_version = config["swf_version"]
   end
 
   def login
@@ -36,7 +36,7 @@ class KanAPIClient
     
     response = @agent.post('http://osapi.dmm.com/gadgets/makeRequest',
     {
-      "url" =>  "#{API_BASE_URL}/api_auth_member/dmmlogin/#{owner}/1/1378145601790",
+      "url" =>  "#{@api_base_url}/api_auth_member/dmmlogin/#{owner}/1/1378145601790",
       "httpMethod" => "GET",
       "headers" => nil,
       "postData" => nil,
@@ -64,9 +64,9 @@ class KanAPIClient
       "api_verno" => 1,
       "api_token" => @api_token
     }
-    response = @agent.post(API_BASE_URL + path,
+    response = @agent.post(@api_base_url + path,
                           params.merge(base_params),
-                          {"Referer" => "#{API_HOST}/kcs/port.swf?version=#{SWF_VERSION}"})
+                          {"Referer" => "#{@api_host}/kcs/port.swf?version=#{@swf_version}"})
     str = URI.unescape(response.body).split("=")[1..-1].join #先頭のsvdata=を消す
     json = JSON.parse(str)
     @logger.info "path = #{path}, params = #{params}, response = #{json}"
@@ -94,6 +94,18 @@ class KanAPIClient
     api_post(path,params)
   end
 
+  def action_log
+    path = "/api_get_member/actionlog"
+    params = {}
+    api_post(path,params)
+  end
+
+  def ship
+    path = "/api_get_member/ship"
+    params = {}
+    api_post(path,params)
+  end
+
   #船情報取得
   def ship2
     path = "/api_get_member/ship2"
@@ -101,7 +113,7 @@ class KanAPIClient
     api_post(path,params)
   end
 
-  #艦隊情報取得
+  #遠征の終了時間をすぎたときに呼ぶとmission_resultを呼べる状態にする
   def deck_port
     path = "/api_get_member/deck_port"
     params = {}
@@ -145,3 +157,5 @@ class KanAPIClient
   #end
 
 end
+
+
