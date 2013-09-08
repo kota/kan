@@ -59,7 +59,7 @@ class KanAPIClient
     @api_token = $1
   end
   
-  def api_post(path,params)
+  def api_post(path,params={})
     base_params = {
       "api_verno" => 1,
       "api_token" => @api_token
@@ -89,28 +89,32 @@ class KanAPIClient
 
   #ユーザ情報取得
   def basic
-    path = "/api_get_member/basic"
-    params = {}
-    api_post(path,params)
+    api_post("/api_get_member/basic")
+  end
+
+  def material
+    api_post("/api_get_member/material")
   end
 
   def action_log
-    path = "/api_get_member/actionlog"
-    params = {}
-    api_post(path,params)
+    api_post("/api_get_member/actionlog")
   end
 
   def ship
-    path = "/api_get_member/ship"
-    params = {}
-    api_post(path,params)
+    api_post("/api_get_member/ship")
   end
 
   #船情報取得
   def ship2
     path = "/api_get_member/ship2"
-    params = {}
+    params = { "api_sort_order" => 2, "api_sort_key" => 1}
     api_post(path,params)
+  end
+
+  #修理ドック情報取得
+  def ndock
+    path = "/api_get_member/ndock"
+    api_post(path,{})
   end
 
   #遠征の終了時間をすぎたときに呼ぶとmission_resultを呼べる状態にする
@@ -148,14 +152,18 @@ class KanAPIClient
     api_post(path,params)
   end
 
-  #def start_nyukyo(ship_id,dock_id)
-  #  params = {
-  #    "api_ship_id" => ship_id,
-  #    "api_ndock_id" => dock_id,
-  #    "api_highspeed" => 0,
-  #  }
-  #end
+  #入渠
+  def start_nyukyo(ship_id,dock_id,high_speed=0)
+   path = "/api_req_nyukyo/start"
+    params = {
+      "api_ship_id" => ship_id,
+      "api_ndock_id" => dock_id,
+      "api_highspeed" => high_speed
+    }
+    api_post(path,params)
+  end
 
 end
+
 
 
