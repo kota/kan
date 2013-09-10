@@ -7,7 +7,7 @@ class Deck
   def initialize(json=nil)
     if json
       @id = json["api_id"]
-      @ship_ids = json["api_ship"]
+      @ship_ids = json["api_ship"].map(&:to_i)
       @mission_state = json["api_mission"][0]
       @mission_id = json["api_mission"][1]
     end
@@ -84,6 +84,7 @@ class Dock
 end
 
 class Kan
+  attr_reader :decks, :ships, :material
   
   def initialize
     @api_client = KanAPIClient.new
@@ -138,7 +139,7 @@ class Kan
   def charge_and_start_mission(mission_id,deck_id)
     deck = @decks.find{|d| d.id == deck_id}
     deck.ship_ids.each do |ship_id|
-      @api_client.charge(ship_id)
+      @api_client.charge(ship_id) if ship_id != -1
     end
     @api_client.start_mission(mission_id,deck_id)
   end

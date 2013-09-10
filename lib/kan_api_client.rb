@@ -69,7 +69,11 @@ class KanAPIClient
                           {"Referer" => "#{@api_host}/kcs/port.swf?version=#{@swf_version}"})
     str = URI.unescape(response.body).split("=")[1..-1].join #先頭のsvdata=を消す
     json = JSON.parse(str)
-    @logger.info "path = #{path}, params = #{params}, response = #{json}"
+    if json["api_result"].to_i != 1
+      @logger.error "Error: path = #{path}, params = #{params}, response = #{json}" 
+    else
+      @logger.info "path = #{path}, params = #{params}, response = #{json}"
+    end
     json
   end
 
