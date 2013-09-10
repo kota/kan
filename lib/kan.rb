@@ -2,7 +2,7 @@
 require File.expand_path(File.dirname(__FILE__) + '/kan_api_client.rb')
 
 class Deck
-  attr_accessor :id, :ship_ids, :mission_id
+  attr_accessor :id, :ship_ids, :mission_id, :mission_finishes_at
 
   def initialize(json=nil)
     if json
@@ -10,6 +10,7 @@ class Deck
       @ship_ids = json["api_ship"].map(&:to_i)
       @mission_state = json["api_mission"][0]
       @mission_id = json["api_mission"][1]
+      @mission_finishes_at = json["api_mission"][2]
     end
   end
 
@@ -19,6 +20,11 @@ class Deck
 
   def mission_finished?
     @mission_state == 2
+  end
+
+  def to_s
+    time = Time.at(@mission_finishes_at.to_s[0..-4].to_i).strftime("%Y/%m/%d %H:%M:%S")
+    "艦隊#{@id} #{in_mission? ? "遠征中:#{@mission_id} #{time}まで" : ''}"
   end
 
 end
@@ -47,6 +53,7 @@ class Material
 end
 
 class Ship
+  #TODO level,cond,expも追加
   attr_accessor :id, :name, :hp, :max_hp, :fuel, :max_fuel, :bullet, :max_bullet, :dock_items, :dock_time
 
   def initialize(json=nil)
@@ -60,6 +67,10 @@ class Ship
     @max_bullet = json["api_bull_max"].to_i
     @dock_items = json["api_ndock_item"].map(&:to_i)
     @dock_time = json["api_ndock_time"].to_i
+  end
+
+  def to_s
+    "#{@name}, HP:#{@hp}/#{@max_hp}, 燃料:#{@fuel}/#{@max_fuel}, 銃弾:#{@bullet}/#{@max_bullet}"
   end
 
   def damaged?
@@ -90,6 +101,10 @@ class Kan
     @api_client = KanAPIClient.new
     @api_client.login
     @api_client.deck_port
+    update_all
+  end
+
+  def update_all
     update_decks
     update_material
     update_ships
@@ -136,11 +151,15 @@ class Kan
     end
   end
 
-  def charge_and_start_mission(mission_id,deck_id)
+  def charge_deck(deck_id)
     deck = @decks.find{|d| d.id == deck_id}
     deck.ship_ids.each do |ship_id|
       @api_client.charge(ship_id) if ship_id != -1
     end
+  end
+
+  def charge_and_start_mission(mission_id,deck_id)
+    charge_deck(deck_id)
     @api_client.start_mission(mission_id,deck_id)
   end
 
