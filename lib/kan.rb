@@ -23,7 +23,7 @@ class Deck
   end
 
   def to_s
-    time = Time.at(@mission_finishes_at.to_s[0..-4].to_i).strftime("%Y/%m/%d %H:%M:%S")
+    time = Time.at(@mission_finishes_at.to_s[0..-4].to_i).strftime("%H:%M:%S")
     "艦隊#{@id} #{in_mission? ? "遠征中:#{@mission_id} #{time}まで" : ''}"
   end
 
@@ -54,7 +54,7 @@ end
 
 class Ship
   #TODO level,cond,expも追加
-  attr_accessor :id, :name, :hp, :max_hp, :fuel, :max_fuel, :bullet, :max_bullet, :dock_items, :dock_time
+  attr_accessor :id, :name, :hp, :max_hp, :fuel, :max_fuel, :bullet, :max_bullet, :dock_items, :dock_time, :level, :condition, :exp
 
   def initialize(json=nil)
     @id = json["api_id"].to_i
@@ -67,10 +67,13 @@ class Ship
     @max_bullet = json["api_bull_max"].to_i
     @dock_items = json["api_ndock_item"].map(&:to_i)
     @dock_time = json["api_ndock_time"].to_i
+    @level = json["api_lv"].to_i
+    @condition = json["api_cond"].to_i
+    @exp = json["api_exp"].to_i
   end
 
   def to_s
-    "#{@name}, HP:#{@hp}/#{@max_hp}, 燃料:#{@fuel}/#{@max_fuel}, 銃弾:#{@bullet}/#{@max_bullet}"
+    "#{@name}, lv#{@level}, HP:#{@hp}/#{@max_hp}, 状態:#{@condition}, 燃料:#{@fuel}/#{@max_fuel}, 銃弾:#{@bullet}/#{@max_bullet}"
   end
 
   def damaged?
@@ -89,7 +92,7 @@ class Dock
   def initialize(json=nil)
     @id = json["api_id"].to_i
     @state = json["api_state"].to_i
-    @ship_id = json["ship_id"].to_i
+    @ship_id = json["api_ship_id"].to_i
   end
 
 end
