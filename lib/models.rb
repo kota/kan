@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
 class Dock
-  attr_accessor :id, :state, :ship_id
+  attr_accessor :id, :state, :ship_id, :complete_time
 
   def initialize(json=nil)
     if json
       @id = json["api_id"].to_i
       @state = json["api_state"].to_i
       @ship_id = json["api_ship_id"].to_i
+      @compete_time = json["api_complete_time"]
     end
   end
 
@@ -17,14 +18,15 @@ class Dock
       "利用可能"
     when 1
       "使用中"
-    when 2
+    when -1 
       "未解放"
     end
   end
 
   def to_s
+    time = Time.at(@compete_time.to_s[0..-4].to_i).strftime("%H:%M:%S")
     s = "状態:#{state_label}"
-    s += ",船ID:#{ship_id}" if @ship_id > 0
+    s += ",船ID:#{ship_id} #{time}まで" if @ship_id > 0
     s
   end
 
