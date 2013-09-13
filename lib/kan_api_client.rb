@@ -57,6 +57,8 @@ class KanAPIClient
     body = URI.unescape(response.body)
     body =~ /\\\"api_token\\\"\:\\\"(.*?)\\\"/
     @api_token = $1
+
+    @logger.info(body)
   end
   
   def api_post(path,params={})
@@ -167,7 +169,32 @@ class KanAPIClient
     api_post(path,params)
   end
 
+  #出撃
+  def start_map(deck_id,maparea_id,mapinfo_no,formation_id=1)
+    path = "/api_req_map/start"
+    params = {
+      "api_formation_id" => formation_id,
+      "api_deck_id" => deck_id,
+      "api_maparea_id" => maparea_id,
+      "api_mapinfo_no" => mapinfo_no,
+    }
+    api_post(path,params) 
+  end
+
+  def start_battle(formation_id)
+    path = "/api_req_sortie/battle"
+    params = {
+      "api_formation" => 1
+    }
+    api_post(path,params)
+  end
+
+  def start_midnight_battle
+    api_post("/api_req_battle_midnight/battle",{})
+  end
+
+  def battle_result
+    api_post("/api_req_sortie/battleresult",{})
+  end
+
 end
-
-
-

@@ -28,21 +28,62 @@ class KanConsole
         @kan.update_all
         puts "updated."
       elsif tokens[0] == 'start_mission'
-        puts "usage: mission mission_id deck_id" if tokens.size < 3
-        mission_id = tokens[1].to_i
-        deck_id = tokens[2].to_i
-        @kan.start_mission_if_possible(mission_id,deck_id)
-        puts "mission #{mission_id} started."
+        if tokens.size < 3
+          puts "usage: mission mission_id deck_id" 
+        else
+          mission_id = tokens[1].to_i
+          deck_id = tokens[2].to_i
+          @kan.start_mission_if_possible(mission_id,deck_id)
+          puts "mission #{mission_id} started."
+        end
       elsif tokens[0] == 'charge_deck'
-        puts "usage: charge_deck deck_id" if tokens.size < 2
-        deck_id = tokens[1].to_i
-        @kan.charge_deck(deck_id) 
-        puts "deck #{deck_id} charged."
+        if tokens.size < 2
+          puts "usage: charge_deck deck_id" 
+        else
+          deck_id = tokens[1].to_i
+          @kan.charge_deck(deck_id) 
+          puts "deck #{deck_id} charged."
+        end
+      elsif tokens[0] == "start_map"
+        if tokens.size < 4
+          puts "usage: start_map deck_id maparea_id mapinfo_no"
+        else
+          deck_id = tokens[1].to_i
+          maparea_id = tokens[2].to_i
+          mapinfo_no = tokens[3].to_i
+          map = @kan.start_map(deck_id,maparea_id,mapinfo_no)
+          if map.enemy?
+            formation_id = 0
+            while(!(1..5).include?(formation_id))
+              puts "敵に遭遇しました。陣形を選んでください。(1~5)"
+              formation_id = get_input.to_i
+            end
+            battle = @kan.start_battle(formation_id)
+            if battle.midnight?
+              do_midnight = nil
+              while(!(do_midnight == 'y' || do_midnight == 'n'))
+                puts "夜戦を行いますか？ y/n"
+                do_midnight = get_input.strip
+              end
+              @kan.start_midnight_battle if do_midnight
+            end
+            battle_result = @kan.battle_result
+            puts battle_result
+            @kan.update_all
+          else
+            puts "資源を拾いました"
+          end
+        end
+      elsif tokens[0] == "docks"
+        docks = @kan.update_docks
+        docks.each{|dock| puts dock}
       else
-        puts "invalid command #{tokens[0]}"
+        puts "invalid command: #{tokens[0]}, type 'help' or 'help command_name' to see help."
       end
     end
   end
+
+  private
 
   def print_deck
     decks = @kan.decks
@@ -83,6 +124,11 @@ class KanConsole
     when "charge_deck"
       "指定した艦隊を補給します\n" + 
       "usage: charge_deck deck_id"
+    when "start_map"
+      "出撃します\n" + 
+      "usage: start_map deck_id maparea_id, mapinfo_no\n" + 
+      "example: start_map 1 3 2\n" +
+      "デッキ1を3-2の海域に出撃させます"
     end
   end
 
