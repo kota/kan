@@ -81,15 +81,31 @@ class Ship
   end
 
   def to_s
-    "#{@name},id:#{@id}, lv:#{@level}, HP:#{@hp}/#{@max_hp}, 状態:#{@condition}, 燃料:#{@fuel}/#{@max_fuel}, 銃弾:#{@bullet}/#{@max_bullet}"
+    "#{@name}, id:#{@id}, lv:#{@level}, HP:#{@hp}/#{@max_hp}(#{damage_ratio}), 状態:#{@condition}, 燃料:#{@fuel}/#{@max_fuel}, 弾薬:#{@bullet}/#{@max_bullet}, 入渠:#{@dock_time}" 
   end
 
   def damaged?
     @hp < @max_hp
   end
 
+  def enough_hp_for_battle?
+    @hp.to_f / @max_hp.to_f >= 0.76
+  end
+
   def need_supply?
     @fuel < @max_fuel || @bullet < @max_bullet
+  end
+
+  def good_condition?
+    @condition >= 30
+  end
+
+  def all_green?
+    enough_hp_for_battle? && good_condition? && !need_supply?
+  end
+
+  def damage_ratio
+    (@hp / @max_hp.to_f).round(3)
   end
 
 end

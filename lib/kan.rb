@@ -69,6 +69,10 @@ class Kan
     end
   end
 
+  def change(ship_id,index,deck_id)
+    @api_client.change(ship_id,index,deck_id)
+  end
+
   def charge_and_start_mission(mission_id,deck_id)
     charge_deck(deck_id)
     @api_client.start_mission(mission_id,deck_id)
@@ -98,32 +102,38 @@ class Kan
   end
 
   #ドックが空いていて資源が足りていれば損傷している船を入渠させる
-  def nyukyo_any_ships_if_possible
+  def nyukyo_any_ships_if_possible(ignore_small_damage=false)#trueならhpがmaxの80%以下になるまでは入渠しない
     dock_id = open_dock_id
     return unless dock_id
-    @ships.each do |ship|
-      if ship.damaged? && !in_dock?(ship.id) && enough_material_for_nyukyo?(ship.id)
-        start_nyukyo(ship.id,dock_id)
-        update_material
-        update_ships
-        update_docks
-        return unless dock_id = open_dock_id
-      end
+    damaged_ships = @ships.select do |ship|
+      (ignore_small_damage ? !ship.enough_hp_for_battle? : ship.damaged?) && !in_dock?(ship.id) && enough_material_for_nyukyo?(ship.id)
+    end
+    return if damaged_ships.size == 0
+
+    #入渠時間が少ない船艦から入渠させる
+    damaged_ships.sort_by{|ship| ship.dock_time}.each do |ship|
+      start_nyukyo(ship.id,dock_id)
+      update_material
+      update_ships
+      update_docks
+      return unless dock_id = open_dock_id
     end
   end
 
   #出撃
   def start_map(deck_id,maparea_id,mapinfo_no,formation_id=1)
     json = @api_client.start_map(deck_id,maparea_id,mapinfo_no,formation_id)
-    puts json
     @map = Map.new(json["api_data"])
+  end
+
+  def next_map
+    @api_client.next
   end
 
   #戦闘
   def start_battle(formation_id)
     @battle = nil
     json = @api_client.start_battle(formation_id)
-    puts json
     @battle = Battle.new(json["api_data"])
   end
 
@@ -137,15 +147,35 @@ class Kan
     result = BattleResult.new(json["api_data"])
   end
 
+  def all_green?(deck_id)
+    deck = @decks.find{|d| d.id == deck_id}
+    return false unless deck
+    return false if deck.in_mission?
+    deck.ship_ids.all?{|id| ready_to_battle?(id)}
+  end
+
+  def ready_to_battle?(ship_id)
+    ship = find_ship(ship_id)
+    ship.all_green? & !in_dock?(ship_id)
+  end
+
+  def in_dock?(ship_id)
+    @docks.map(&:ship_id).include?(ship_id)
+  end
+
+  def find_ship(ship_id)
+    @ships.find{|s| s.id == ship_id}
+  end
+
+  def find_deck(deck_id)
+    @decks.find{|d| d.id == deck_id}
+  end
+
   private
 
   def open_dock_id
     dock = @docks.find{|d| d.state == 0}
     dock ? dock.id : nil
-  end
-
-  def in_dock?(ship_id)
-    @docks.map(&:ship_id).include?(ship_id)
   end
 
   def enough_material_for_nyukyo?(ship_id)

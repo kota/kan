@@ -137,6 +137,17 @@ class KanAPIClient
     api_post(path,params)
   end
 
+  #編成
+  def change(ship_id,index,deck_id)
+    path = "/api_req_hensei/change"
+    params = {
+      "api_ship_id" =>  ship_id,
+      "api_ship_idx" => index,
+      "api_id" =>  deck_id,
+    }
+    api_post(path,params)
+  end
+
   #遠征開始
   def start_mission(mission_id,deck_id)
     path = "/api_req_mission/start"
@@ -179,6 +190,10 @@ class KanAPIClient
       "api_mapinfo_no" => mapinfo_no,
     }
     api_post(path,params) 
+  end
+
+  def next_map
+    api_post("/api_req_map/next",{})
   end
 
   def start_battle(formation_id)
